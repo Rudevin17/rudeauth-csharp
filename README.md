@@ -13,8 +13,9 @@ Crypto is libsodium via NSec: Ed25519, X25519, HKDF, and XChaCha20-Poly1305.
 dotnet add package RudeAuth
 ```
 
-Targets .NET 8 for now. A .NET Standard 2.0 target, for .NET Framework and Unity,
-is the next step.
+Targets .NET Standard 2.1 and .NET 8, so it runs on .NET 5 and later, Unity 2021
+and later, and Mono. .NET Framework caps at .NET Standard 2.0, which the crypto
+backend does not reach, so it is not yet supported.
 
 ## Quick start
 

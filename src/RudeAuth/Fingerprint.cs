@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 using System.Text;
 using Microsoft.Win32;
 
@@ -11,6 +10,9 @@ namespace RudeAuth;
 // control against a motivated attacker. The per-OS component set is the shared
 // spec every RudeAuth SDK implements, so a device is recognised identically no
 // matter which SDK authenticated it.
+//
+// OS is selected with RuntimeInformation rather than OperatingSystem.IsWindows
+// so the file compiles for netstandard2.0 as well as net8.0.
 internal static class Fingerprint
 {
     internal static string Label()
@@ -20,7 +22,10 @@ internal static class Fingerprint
             string n = Environment.MachineName;
             return string.IsNullOrEmpty(n) ? "unknown" : n;
         }
-        catch { return "unknown"; }
+        catch
+        {
+            return "unknown";
+        }
     }
 
     // Collect gathers what this machine can report. Components that fail are
@@ -28,13 +33,21 @@ internal static class Fingerprint
     // would make unrelated devices look identical.
     internal static IReadOnlyList<string> Collect()
     {
-        if (OperatingSystem.IsWindows()) return CollectWindows();
-        if (OperatingSystem.IsLinux()) return CollectLinux();
-        if (OperatingSystem.IsMacOS()) return CollectMacOS();
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            return CollectWindows();
+        }
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            return CollectLinux();
+        }
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+            return CollectMacOS();
+        }
         return Array.Empty<string>();
     }
 
-    [SupportedOSPlatform("windows")]
     private static IReadOnlyList<string> CollectWindows()
     {
         var outp = new List<string>();
@@ -50,7 +63,6 @@ internal static class Fingerprint
         return outp;
     }
 
-    [SupportedOSPlatform("windows")]
     private static string? RegString(string path, string name)
     {
         try
@@ -59,10 +71,12 @@ internal static class Fingerprint
             using RegistryKey? key = baseKey.OpenSubKey(path);
             return (key?.GetValue(name) as string)?.TrimEnd(' ', '\0');
         }
-        catch { return null; }
+        catch
+        {
+            return null;
+        }
     }
 
-    [SupportedOSPlatform("windows")]
     private static string? VolumeSerial()
     {
         if (GetVolumeInformation(@"C:\", null, 0, out uint serial, out _, out _, null, 0) && serial != 0)
@@ -96,8 +110,22 @@ internal static class Fingerprint
 
     private static string? ReadFirstLine(string path)
     {
-        try { return System.IO.File.Exists(path) ? System.IO.File.ReadLines(path).FirstOrDefault() : null; }
-        catch { return null; }
+        try
+        {
+            if (!System.IO.File.Exists(path))
+            {
+                return null;
+            }
+            foreach (string line in System.IO.File.ReadLines(path))
+            {
+                return line;
+            }
+            return null;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static IReadOnlyList<string> CollectMacOS()
@@ -123,7 +151,10 @@ internal static class Fingerprint
                 UseShellExecute = false,
             };
             using Process? p = Process.Start(psi);
-            if (p is null) return null;
+            if (p is null)
+            {
+                return null;
+            }
             string output = p.StandardOutput.ReadToEnd();
             p.WaitForExit();
             foreach (string line in output.Split('\n'))
@@ -131,11 +162,17 @@ internal static class Fingerprint
                 if (line.Contains("\"" + key + "\""))
                 {
                     int i = line.IndexOf("= ", StringComparison.Ordinal);
-                    if (i >= 0) return line[(i + 2)..].Trim().Trim('"');
+                    if (i >= 0)
+                    {
+                        return line.Substring(i + 2).Trim().Trim('"');
+                    }
                 }
             }
             return null;
         }
-        catch { return null; }
+        catch
+        {
+            return null;
+        }
     }
 }

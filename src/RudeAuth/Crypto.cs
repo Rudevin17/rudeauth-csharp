@@ -7,6 +7,9 @@ namespace RudeAuth;
 // Crypto mirrors the server's internal/crypto exactly. These are protocol
 // constants and constructions, not tunables: the known-answer vectors catch any
 // drift from what the server actually produces.
+//
+// Only the lowest-common-denominator BCL APIs are used, so the library compiles
+// for both net8.0 and netstandard2.0 (the latter reaching .NET Framework and Unity).
 internal static class Crypto
 {
     private const string SigPrefix = "rudeauth-v1:";
@@ -16,7 +19,11 @@ internal static class Crypto
     // message the server signs.
     internal static byte[] SigningInput(string endpoint, byte[] data)
     {
-        byte[] sum = SHA256.HashData(data);
+        byte[] sum;
+        using (var sha = SHA256.Create())
+        {
+            sum = sha.ComputeHash(data);
+        }
         byte[] prefix = Encoding.ASCII.GetBytes(SigPrefix + endpoint + ":");
         byte[] msg = new byte[prefix.Length + sum.Length];
         Buffer.BlockCopy(prefix, 0, msg, 0, prefix.Length);
@@ -98,7 +105,10 @@ internal static class Crypto
     internal static byte[] RandomNonce()
     {
         byte[] n = new byte[32];
-        RandomNumberGenerator.Fill(n);
+        using (var rng = RandomNumberGenerator.Create())
+        {
+            rng.GetBytes(n);
+        }
         return n;
     }
 }

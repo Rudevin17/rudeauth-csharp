@@ -86,7 +86,7 @@ public sealed class RudeAuthClient : IDisposable
                 throw new RudeAuthException(ErrorCode.BadResponse, $"http status {(int)resp.StatusCode}");
             }
 
-            byte[] raw = await resp.Content.ReadAsByteArrayAsync(ct).ConfigureAwait(false);
+            byte[] raw = await resp.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
             Envelope? env;
             try { env = JsonSerializer.Deserialize<Envelope>(raw, JsonOpts); }
             catch (JsonException) { throw new RudeAuthException(ErrorCode.BadResponse, "envelope did not parse"); }
