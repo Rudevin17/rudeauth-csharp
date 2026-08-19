@@ -1,0 +1,43 @@
+name: Publish to NuGet
+
+# Publishes the RudeAuth package to nuget.org via Trusted Publishing (OIDC),
+# so there is no long-lived API key to store or leak. Run it by hand from the
+# Actions tab (workflow_dispatch), or automatically when a GitHub release is
+# published. The nuget.org Trusted Publisher policy must name this file
+# (publish.yml), this repo, and the same package owner used below.
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Pack
+        run: dotnet pack src/RudeAuth/RudeAuth.csproj -c Release -o artifacts
+
+      - name: NuGet login (OIDC Trusted Publishing)
+        id: login
+        uses: NuGet/login@v1
+        with:
+          user: rudevin
+
+      - name: Push
+        run: >
+          dotnet nuget push "artifacts/*.nupkg"
+          --api-key "${{ steps.login.outputs.NUGET_API_KEY }}"
+          --source https://www.nuget.org/api/v2/package
+          --skip-duplicate
