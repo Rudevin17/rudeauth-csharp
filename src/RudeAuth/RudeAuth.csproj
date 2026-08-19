@@ -10,6 +10,22 @@
     <NoWarn>CA1416</NoWarn>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <PackageId>RudeAuth</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>RudeAuth</Authors>
+    <Description>Client SDK for a RudeAuth licensing server: responses are verified against a pinned Ed25519 key before any field is trusted.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/Rudevin17/rudeauth-csharp</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Rudevin17/rudeauth-csharp</RepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>licensing;authentication;ed25519;drm;security</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
     <PackageReference Include="NSec.Cryptography" Version="22.4.0" />
